@@ -1,0 +1,1 @@
+import SalesChart from "../components/SalesChart";

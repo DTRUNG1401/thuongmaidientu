@@ -1,0 +1,9 @@
+.banner{
+  width:1200px;
+  margin:20px auto;
+}
+
+.banner img{
+  width:100%;
+  border-radius:10px;
+}
