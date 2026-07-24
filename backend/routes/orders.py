@@ -5,29 +5,9 @@ from flask import Blueprint, jsonify, request
 from extensions import db
 from models.order import Order
 from models.product import Product
+from utils import parse_int, parse_json_list as parse_items
 
 order_bp = Blueprint("orders", __name__, url_prefix="/api/orders")
-
-
-def parse_int(value):
-    try:
-        return int(value) if value not in (None, "") else None
-    except (TypeError, ValueError):
-        return None
-
-
-def parse_items(raw_items):
-    if isinstance(raw_items, list):
-        return raw_items
-
-    if isinstance(raw_items, str):
-        try:
-            parsed = json.loads(raw_items)
-            return parsed if isinstance(parsed, list) else []
-        except json.JSONDecodeError:
-            return []
-
-    return []
 
 
 def enrich_item_with_seller(item):

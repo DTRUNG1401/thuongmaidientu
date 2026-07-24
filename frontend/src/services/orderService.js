@@ -1,16 +1,5 @@
 import api from "./api";
-
-const FALLBACK_USER_ID = 1;
-
-const getStoredUser = () => {
-  try {
-    return JSON.parse(localStorage.getItem("user") || "null");
-  } catch {
-    return null;
-  }
-};
-
-const getUserId = () => getStoredUser()?.id || FALLBACK_USER_ID;
+import { getUserId } from "../utils/auth";
 
 export const getOrders = async () => {
   const response = await api.get(`/orders?user_id=${getUserId()}`);

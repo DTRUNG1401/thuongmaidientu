@@ -1,27 +1,24 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getCart, saveCart as saveRemoteCart } from "../services/cartService";
+import { isLoggedIn } from "../utils/auth";
+import { readLocalCart, writeLocalCart } from "../utils/storage";
 import { getImageUrl } from "../utils/images";
 import { formatPrice, hasDiscount } from "../utils/pricing";
 import "../styles/cart.css";
-
-function isLoggedIn() {
-  return Boolean(localStorage.getItem("token") && localStorage.getItem("user"));
-}
 
 function Cart() {
   const navigate = useNavigate();
   const [cart, setCart] = useState([]);
 
   useEffect(() => {
-    const data = JSON.parse(localStorage.getItem("cart")) || [];
-    setCart(data);
+    setCart(readLocalCart());
 
     getCart()
       .then((items) => {
         if (Array.isArray(items)) {
           setCart(items);
-          localStorage.setItem("cart", JSON.stringify(items));
+          writeLocalCart(items);
         }
       })
       .catch(() => {});
@@ -29,7 +26,7 @@ function Cart() {
 
   const saveCart = (updated) => {
     setCart(updated);
-    localStorage.setItem("cart", JSON.stringify(updated));
+    writeLocalCart(updated);
     saveRemoteCart(updated).catch(() => {});
   };
 

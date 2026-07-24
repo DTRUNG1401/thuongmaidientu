@@ -8,6 +8,7 @@ import {
   uploadProductImage,
 } from "../services/productService";
 import { registerSeller } from "../services/authService";
+import { getStoredUser } from "../utils/auth";
 import { getImageUrl } from "../utils/images";
 import { formatPrice } from "../utils/pricing";
 import "../styles/profile.css";
@@ -27,14 +28,6 @@ const orderActions = {
   "Đã xác nhận": { label: "Bắt đầu giao", status: "Đang giao hàng" },
   "Đang giao hàng": { label: "Hoàn tất", status: "Đã giao hàng" },
 };
-
-function getStoredUser() {
-  try {
-    return JSON.parse(localStorage.getItem("user"));
-  } catch {
-    return null;
-  }
-}
 
 function SellerRegister() {
   const [user, setUser] = useState(getStoredUser);

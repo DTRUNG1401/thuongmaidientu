@@ -2,22 +2,17 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { clearCart, saveCart as saveRemoteCart } from "../services/cartService";
 import { createOrder } from "../services/orderService";
+import { isLoggedIn } from "../utils/auth";
+import {
+  readLocalCart,
+  readLocalOrders,
+  removeLocalCart,
+  writeLocalCart,
+  writeLocalOrders,
+} from "../utils/storage";
 import { getImageUrl } from "../utils/images";
 import { formatPrice } from "../utils/pricing";
 import "../styles/cart.css";
-
-function readLocalCart() {
-  try {
-    const items = JSON.parse(localStorage.getItem("cart") || "[]");
-    return Array.isArray(items) ? items : [];
-  } catch {
-    return [];
-  }
-}
-
-function isLoggedIn() {
-  return Boolean(localStorage.getItem("token") && localStorage.getItem("user"));
-}
 
 function Checkout() {
   const navigate = useNavigate();
@@ -40,7 +35,7 @@ function Checkout() {
 
   const saveCart = (updated) => {
     setCart(updated);
-    localStorage.setItem("cart", JSON.stringify(updated));
+    writeLocalCart(updated);
     saveRemoteCart(updated).catch(() => {});
   };
 
@@ -102,7 +97,7 @@ function Checkout() {
         phone: customer.phone,
         address: customer.address,
       });
-      const orders = JSON.parse(localStorage.getItem("orders")) || [];
+      const orders = readLocalOrders();
       const remoteOrders = Array.isArray(remoteOrder.orders) ? remoteOrder.orders : [remoteOrder];
       const savedOrders = remoteOrders.map((order) => {
         const { orders: _ignored, ...cleanOrder } = order;
@@ -116,15 +111,15 @@ function Checkout() {
         };
       });
       orders.push(...savedOrders);
-      localStorage.setItem("orders", JSON.stringify(orders));
+      writeLocalOrders(orders);
       await clearCart();
     } catch {
-      const orders = JSON.parse(localStorage.getItem("orders")) || [];
+      const orders = readLocalOrders();
       orders.push(localOrder);
-      localStorage.setItem("orders", JSON.stringify(orders));
+      writeLocalOrders(orders);
     }
 
-    localStorage.removeItem("cart");
+    removeLocalCart();
     navigate("/orders");
   };
 

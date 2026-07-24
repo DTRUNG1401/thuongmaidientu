@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { saveCart } from "../services/cartService";
 import { getProductById, sampleProducts } from "../services/productService";
 import { getImageUrl } from "../utils/images";
+import { readLocalCart, writeLocalCart } from "../utils/storage";
 import { isProductLiked, readLikedProducts, toggleProductLike } from "../utils/likes";
 import { formatPrice, getCartProduct, getDiscountPercent, getSalePrice, hasDiscount } from "../utils/pricing";
 import "../styles/product.css";
@@ -40,14 +41,14 @@ function ProductDetail() {
   const liked = isProductLiked(product, likedProducts);
 
   const addToCart = async () => {
-    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+    const cart = readLocalCart();
     const cartProduct = getCartProduct(product);
     const existing = cart.find((item) => item.id === cartProduct.id);
     const updated = existing
       ? cart.map((item) => (item.id === cartProduct.id ? { ...item, quantity: (item.quantity || 1) + 1 } : item))
       : [...cart, { ...cartProduct, quantity: 1 }];
 
-    localStorage.setItem("cart", JSON.stringify(updated));
+    writeLocalCart(updated);
 
     try {
       await saveCart(updated);

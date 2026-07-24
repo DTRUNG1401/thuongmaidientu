@@ -1,21 +1,13 @@
 import { Link, useNavigate } from "react-router-dom";
+import { getStoredUser, logout as clearSession } from "../utils/auth";
 import "../styles/profile.css";
-
-function getStoredUser() {
-  try {
-    return JSON.parse(localStorage.getItem("user"));
-  } catch {
-    return null;
-  }
-}
 
 function Profile() {
   const navigate = useNavigate();
   const user = getStoredUser();
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    clearSession();
     navigate("/login");
   };
 

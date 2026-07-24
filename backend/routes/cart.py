@@ -4,6 +4,7 @@ from flask import Blueprint, jsonify, request
 
 from extensions import db
 from models.cart import Cart
+from utils import parse_json_list
 
 cart_bp = Blueprint("cart", __name__, url_prefix="/api/cart")
 
@@ -25,10 +26,7 @@ def get_or_create_cart(user_id):
 
 
 def decode_items(cart):
-    try:
-        return json.loads(cart.items or "[]")
-    except json.JSONDecodeError:
-        return []
+    return parse_json_list(cart.items)
 
 
 @cart_bp.route("", methods=["GET"])

@@ -3,21 +3,9 @@ from flask import Blueprint, jsonify, request
 from extensions import db
 from models.product import Product
 from models.user import User
+from utils import calculate_sale_price, clamp_discount_percent, parse_int
 
 product_bp = Blueprint("product", __name__, url_prefix="/api/products")
-
-
-def calculate_sale_price(price, discount_percent):
-    price = float(price or 0)
-    discount_percent = min(max(float(discount_percent or 0), 0), 90)
-    return round(price * (100 - discount_percent) / 100)
-
-
-def parse_int(value):
-    try:
-        return int(value) if value not in (None, "") else None
-    except (TypeError, ValueError):
-        return None
 
 
 def get_seller_name(seller_id, fallback=""):
@@ -28,7 +16,7 @@ def get_seller_name(seller_id, fallback=""):
 
 
 def product_to_dict(product):
-    discount_percent = min(max(float(product.discount_percent or 0), 0), 90)
+    discount_percent = clamp_discount_percent(product.discount_percent)
     sale_price = calculate_sale_price(product.price, discount_percent)
 
     return {

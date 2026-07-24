@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { getOrders } from "../services/orderService";
+import { readLocalOrders, writeLocalOrders } from "../utils/storage";
+import { formatPrice } from "../utils/pricing";
 import "../styles/cart.css";
-
-const formatPrice = (price) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(Number(price) || 0);
 
 const paymentLabels = {
   cash: "Tiền mặt",
@@ -15,14 +14,13 @@ function Orders() {
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    const data = JSON.parse(localStorage.getItem("orders")) || [];
-    setOrders(data);
+    setOrders(readLocalOrders());
 
     getOrders()
       .then((remoteOrders) => {
         if (Array.isArray(remoteOrders)) {
           setOrders(remoteOrders);
-          localStorage.setItem("orders", JSON.stringify(remoteOrders));
+          writeLocalOrders(remoteOrders);
         }
       })
       .catch(() => {});

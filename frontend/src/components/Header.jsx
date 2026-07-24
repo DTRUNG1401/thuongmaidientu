@@ -1,17 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { getCategories, sampleCategories } from "../services/productService";
+import { getStoredUser, logout as clearSession } from "../utils/auth";
 import "../styles/header.css";
 
 const ALL_CATEGORY = "Tất cả";
-
-function getStoredUser() {
-  try {
-    return JSON.parse(localStorage.getItem("user"));
-  } catch {
-    return null;
-  }
-}
 
 function Header() {
   const navigate = useNavigate();
@@ -60,8 +53,7 @@ function Header() {
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    clearSession();
     window.location.href = "/login";
   };
 
