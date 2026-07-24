@@ -24,13 +24,17 @@ function Cart() {
           localStorage.setItem("cart", JSON.stringify(items));
         }
       })
-      .catch(() => {});
+      .catch((error) => {
+        console.error("Khong the tai gio hang tu server, dung du lieu cuc bo:", error);
+      });
   }, []);
 
   const saveCart = (updated) => {
     setCart(updated);
     localStorage.setItem("cart", JSON.stringify(updated));
-    saveRemoteCart(updated).catch(() => {});
+    saveRemoteCart(updated).catch((error) => {
+      console.error("Khong the dong bo gio hang len server:", error);
+    });
   };
 
   const updateQuantity = (id, quantity) => {

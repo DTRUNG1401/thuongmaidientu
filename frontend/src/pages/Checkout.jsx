@@ -41,7 +41,9 @@ function Checkout() {
   const saveCart = (updated) => {
     setCart(updated);
     localStorage.setItem("cart", JSON.stringify(updated));
-    saveRemoteCart(updated).catch(() => {});
+    saveRemoteCart(updated).catch((error) => {
+      console.error("Khong the dong bo gio hang len server:", error);
+    });
   };
 
   const updateQuantity = (id, quantity) => {
@@ -118,7 +120,8 @@ function Checkout() {
       orders.push(...savedOrders);
       localStorage.setItem("orders", JSON.stringify(orders));
       await clearCart();
-    } catch {
+    } catch (error) {
+      console.error("Khong the tao don hang tren server, luu tam vao thiet bi:", error);
       const orders = JSON.parse(localStorage.getItem("orders")) || [];
       orders.push(localOrder);
       localStorage.setItem("orders", JSON.stringify(orders));

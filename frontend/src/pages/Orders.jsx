@@ -25,7 +25,9 @@ function Orders() {
           localStorage.setItem("orders", JSON.stringify(remoteOrders));
         }
       })
-      .catch(() => {});
+      .catch((error) => {
+        console.error("Khong the tai don hang tu server, dung du lieu cuc bo:", error);
+      });
   }, []);
 
   return (

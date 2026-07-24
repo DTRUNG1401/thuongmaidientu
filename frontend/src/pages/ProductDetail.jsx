@@ -51,8 +51,9 @@ function ProductDetail() {
 
     try {
       await saveCart(updated);
-    } catch {
+    } catch (error) {
       // Local cart still works when the backend is offline.
+      console.error("Khong the dong bo gio hang len server:", error);
     }
 
     setAdded(true);

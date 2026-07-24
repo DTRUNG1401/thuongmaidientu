@@ -1,15 +1,20 @@
+import logging
 import os
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from sqlalchemy import text
+from werkzeug.exceptions import HTTPException
+from werkzeug.utils import secure_filename
 
 from config import Config
 from extensions import db
 from routes.chatbot import chatbot_bp
 
 UPLOAD_FOLDER = "uploads"
+
+logger = logging.getLogger(__name__)
 
 
 def seed_sellers():
@@ -524,6 +529,7 @@ def ensure_database_schema():
             db.session.commit()
     except Exception:
         db.session.rollback()
+        logger.exception("Failed to migrate 'users' table schema")
 
     try:
         order_columns = db.session.execute(text("PRAGMA table_info(orders)")).fetchall()
@@ -558,6 +564,7 @@ def ensure_database_schema():
             db.session.commit()
     except Exception:
         db.session.rollback()
+        logger.exception("Failed to migrate 'orders' table schema")
 
     try:
         product_columns = db.session.execute(text("PRAGMA table_info(Products)")).fetchall()
@@ -580,6 +587,7 @@ def ensure_database_schema():
             db.session.commit()
     except Exception:
         db.session.rollback()
+        logger.exception("Failed to migrate 'Products' table schema")
 
 
 def create_app():
@@ -604,18 +612,37 @@ def create_app():
     app.register_blueprint(category_bp)
     app.register_blueprint(chatbot_bp)
 
+    @app.errorhandler(HTTPException)
+    def handle_http_exception(error):
+        return jsonify({"error": error.name, "message": error.description}), error.code
+
+    @app.errorhandler(Exception)
+    def handle_unexpected_error(error):
+        # Roll back so a failed transaction does not poison the next request
+        # on the shared session, and surface the error as JSON instead of an
+        # opaque HTML 500.
+        db.session.rollback()
+        logger.exception("Unhandled error while processing %s %s", request.method, request.path)
+        return jsonify({"error": "Internal Server Error", "message": "Da xay ra loi khong mong muon."}), 500
+
     @app.route("/")
     def home():
         return jsonify({"message": "Backend dang hoat dong"})
 
     @app.route("/api/upload", methods=["POST"])
     def upload():
-        file = request.files["file"]
-        filename = file.filename
-        path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        file = request.files.get("file")
+
+        if file is None or not file.filename:
+            return jsonify({"error": "Bad Request", "message": "Khong tim thay tep tai len."}), 400
+
+        filename = secure_filename(file.filename)
+
+        if not filename:
+            return jsonify({"error": "Bad Request", "message": "Ten tep khong hop le."}), 400
 
         os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-        file.save(path)
+        file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
 
         return jsonify({"image": f"/uploads/{filename}"})
 

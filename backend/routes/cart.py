@@ -8,9 +8,16 @@ from models.cart import Cart
 cart_bp = Blueprint("cart", __name__, url_prefix="/api/cart")
 
 
+def parse_user_id(value, default=1):
+    try:
+        return int(value) if value not in (None, "") else default
+    except (TypeError, ValueError):
+        return default
+
+
 def get_user_id():
     data = request.get_json(silent=True) or {}
-    return int(request.args.get("user_id") or data.get("user_id") or 1)
+    return parse_user_id(request.args.get("user_id") or data.get("user_id"))
 
 
 def get_or_create_cart(user_id):
@@ -40,7 +47,7 @@ def get_cart():
 @cart_bp.route("", methods=["PUT", "POST"])
 def save_cart():
     data = request.get_json() or {}
-    user_id = int(data.get("user_id") or 1)
+    user_id = parse_user_id(data.get("user_id"))
     items = data.get("items") or []
     cart = get_or_create_cart(user_id)
 

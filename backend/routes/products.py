@@ -20,6 +20,13 @@ def parse_int(value):
         return None
 
 
+def parse_float(value, default=0.0):
+    try:
+        return float(value) if value not in (None, "") else default
+    except (TypeError, ValueError):
+        raise ValueError(f"Gia tri so khong hop le: {value!r}")
+
+
 def get_seller_name(seller_id, fallback=""):
     seller = User.query.get(seller_id) if seller_id else None
     if seller:
@@ -75,11 +82,17 @@ def add_product():
     seller_id = parse_int(data.get("seller_id"))
     seller_name = data.get("seller_name") or get_seller_name(seller_id)
 
+    try:
+        price = parse_float(data.get("price"), 0.0)
+        discount_percent = parse_float(data.get("discount_percent"), 0.0)
+    except ValueError as error:
+        return jsonify({"error": "Bad Request", "message": str(error)}), 400
+
     product = Product(
         name=data.get("name", ""),
         description=data.get("description", ""),
-        price=float(data.get("price", 0)),
-        discount_percent=float(data.get("discount_percent", 0) or 0),
+        price=price,
+        discount_percent=discount_percent,
         image=data.get("image", ""),
         category=data.get("category", "Sản phẩm"),
         seller_id=seller_id,
@@ -97,10 +110,16 @@ def update_product(product_id):
     product = Product.query.get_or_404(product_id)
     data = request.get_json() or {}
 
+    try:
+        price = parse_float(data.get("price"), product.price or 0)
+        discount_percent = parse_float(data.get("discount_percent"), product.discount_percent or 0)
+    except ValueError as error:
+        return jsonify({"error": "Bad Request", "message": str(error)}), 400
+
     product.name = data.get("name", product.name)
     product.description = data.get("description", product.description)
-    product.price = float(data.get("price", product.price or 0))
-    product.discount_percent = float(data.get("discount_percent", product.discount_percent or 0) or 0)
+    product.price = price
+    product.discount_percent = discount_percent
     product.image = data.get("image", product.image)
     product.category = data.get("category", product.category or "Sản phẩm")
 

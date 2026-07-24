@@ -75,15 +75,15 @@ def order_to_dict(order):
 
 @order_bp.route("", methods=["GET"])
 def get_orders():
-    user_id = request.args.get("user_id")
-    seller_id = request.args.get("seller_id")
+    user_id = parse_int(request.args.get("user_id"))
+    seller_id = parse_int(request.args.get("seller_id"))
     query = Order.query
 
-    if user_id:
-        query = query.filter_by(user_id=int(user_id))
+    if user_id is not None:
+        query = query.filter_by(user_id=user_id)
 
-    if seller_id:
-        query = query.filter_by(seller_id=int(seller_id))
+    if seller_id is not None:
+        query = query.filter_by(seller_id=seller_id)
 
     orders = query.order_by(Order.id.desc()).all()
     return jsonify([order_to_dict(order) for order in orders])
