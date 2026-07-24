@@ -32,7 +32,7 @@ def register():
         username=data.get("username", ""),
         email=data.get("email", ""),
         password=generate_password_hash(data.get("password", "")),
-        role=data.get("role") or "user",
+        role="user",
     )
 
     db.session.add(user)

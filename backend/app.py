@@ -1,15 +1,22 @@
 import os
 
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, abort, jsonify, request, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from sqlalchemy import text
+from werkzeug.utils import secure_filename
 
 from config import Config
 from extensions import db
 from routes.chatbot import chatbot_bp
 
 UPLOAD_FOLDER = "uploads"
+ALLOWED_UPLOAD_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
+
+
+def _allowed_upload(filename):
+    return "." in filename and \
+        filename.rsplit(".", 1)[1].lower() in ALLOWED_UPLOAD_EXTENSIONS
 
 
 def seed_sellers():
@@ -587,7 +594,12 @@ def create_app():
     app.config.from_object(Config)
     app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-    CORS(app)
+    allowed_origins = os.environ.get(
+        "CORS_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173",
+    )
+    origins = [origin.strip() for origin in allowed_origins.split(",") if origin.strip()]
+    CORS(app, resources={r"/api/*": {"origins": origins}})
     db.init_app(app)
     JWTManager(app)
 
@@ -610,11 +622,19 @@ def create_app():
 
     @app.route("/api/upload", methods=["POST"])
     def upload():
-        file = request.files["file"]
-        filename = file.filename
-        path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        file = request.files.get("file")
+        if file is None or not file.filename:
+            abort(400, description="No file provided")
+
+        if not _allowed_upload(file.filename):
+            abort(400, description="Unsupported file type")
+
+        filename = secure_filename(file.filename)
+        if not filename:
+            abort(400, description="Invalid file name")
 
         os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+        path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
         file.save(path)
 
         return jsonify({"image": f"/uploads/{filename}"})
@@ -634,4 +654,5 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    debug = os.environ.get("FLASK_DEBUG", "0").lower() in ("1", "true", "yes")
+    app.run(debug=debug)
